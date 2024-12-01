@@ -31,178 +31,272 @@
  *   </div>
  * </article>
  */
-function insertNewTwit(twitText, twitAuthor) {
-  var newtwit = Handlebars.templates.Twit({ text: twitText,author: twitAuthor})
+function insertNewPost(description, photoURL, price, city, condition)
+{
+  var newCard = Handlebars.templates.newPost({
+    description: description,
+    photoURL: photoURL,
+    price: price,
+    city: city,
+    condtion: condition
+  });
 
-
- var twitContainer = document.querySelector('main.twit-container');
- twitContainer.insertAdjacentHTML("beforeend",newtwit)
-
+  var postsSection = document.getElementById('posts');
+  postsSection.insertAdjacentHTML('beforeend', newCard);
 }
 
 
 /***************************************************************************
  **
- ** You should not modify any of the code below.
+ ** You should not modify any of the functions below.
  **
  ***************************************************************************/
 
 /*
- * This is a global array containing an object representing each twit.  Each
- * twit object has the following form:
- *
- * {
- *   text: "...",
- *   author: "..."
- * }
+ * These arrays hold the collection of all post objects and the list of all
+ * cities that have been used in posts.
  */
-var allTwits = [];
+var allPosts = [];
+var allCities = [];
 
 /*
  * This function checks whether all of the required inputs were supplied by
- * the user and, if so, inserts a new twit into the page using these inputs.
- * If the user did not supply a required input, they instead recieve an alert,
- * and no new twit is inserted.
+ * the user and, if so,i nserting a new post into the page constructed using
+ * these inputs.  If the user did not supply a required input, they instead
+ * recieve an alert, and no new post is inserted.
  */
 function handleModalAcceptClick() {
 
-  var twitText = document.getElementById('twit-text-input').value;
-  var twitAuthor = document.getElementById('twit-author-input').value;
+  var description = document.getElementById('post-text-input').value.trim();
+  var photoURL = document.getElementById('post-photo-input').value.trim();
+  var price = document.getElementById('post-price-input').value.trim();
+  var city = document.getElementById('post-city-input').value.trim();
+  var condition = document.querySelector('#post-condition-fieldset input:checked').value;
 
-  /*
-   * Only generate the new twit if the user supplied values for both the twit
-   * text and the twit attribution.  Give them an alert if they didn't.
-   */
-  if (twitText && twitAuthor) {
+  if(!description || !photoURL || !price || !city || !condition)
+  {
+    alert("You must fill in all of the fields!");
+  }
+  else
+  {
 
-    allTwits.push({
-      text: twitText,
-      author: twitAuthor
+    allPosts.push({
+      description: description,
+      photoURL: photoURL,
+      price: price,
+      city: city,
+      condition: condition
     });
 
-    clearSearchAndReinsertTwits();
+    clearFiltersAndReinsertPosts();
 
-    hideCreateTwitModal();
+    addCityToAllCities(city);
 
-  } else {
-
-    alert('You must specify both the text and the author of the twit!');
+    hideSellSomethingModal();
 
   }
-}
-
-
-/*
- * This function clears the current search term, causing all twits to be
- * re-inserted into the DOM.
- */
-function clearSearchAndReinsertTwits() {
-
-  document.getElementById('navbar-search-input').value = "";
-  doSearchUpdate();
 
 }
 
 
 /*
- * This function shows the modal to create a twit when the "create twit"
- * button is clicked.
+ * This function clears all filter values, causing all posts to be re-inserted
+ * into the DOM.
  */
-function showCreateTwitModal() {
+function clearFiltersAndReinsertPosts() {
 
+  document.getElementById('filter-text').value = "";
+  document.getElementById('filter-min-price').value = "";
+  document.getElementById('filter-max-price').value = "";
+  document.getElementById('filter-city').value = "";
+
+  var filterConditionCheckedInputs = document.querySelectorAll("#filter-condition input");
+  for (var i = 0; i < filterConditionCheckedInputs.length; i++) {
+    filterConditionCheckedInputs[i].checked = false;
+  }
+
+  doFilterUpdate();
+
+}
+
+
+/*
+ * This function checks to see if a city is included in the collection of all
+ * cities for which we have a post.  If it's not, the new city is added to the
+ * collection.
+ */
+function addCityToAllCities(city) {
+
+  /*
+   * If city doesn't already exist in the list of cities by which we can
+   * filter, add it.
+   */
+  if (allCities.indexOf(city.toLowerCase()) === -1) {
+    allCities.push(city.toLowerCase());
+    var newCityOption = createCityOption(city);
+    var filterCitySelect = document.getElementById('filter-city');
+    filterCitySelect.appendChild(newCityOption);
+  }
+
+}
+
+
+/*
+ * This function shows the "sell something" modal by removing the "hidden"
+ * class from the modal and backdrop.
+ */
+function showSellSomethingModal() {
+
+  var showSomethingModal = document.getElementById('sell-something-modal');
   var modalBackdrop = document.getElementById('modal-backdrop');
-  var createTwitModal = document.getElementById('create-twit-modal');
 
-  // Show the modal and its backdrop.
+  showSomethingModal.classList.remove('hidden');
   modalBackdrop.classList.remove('hidden');
-  createTwitModal.classList.remove('hidden');
 
 }
 
 
 /*
- * This function clears any value present in any of the twit input elements.
+ * This function clears any user-entered inputs in the "sell something" modal.
  */
-function clearTwitInputValues() {
+function clearSellSomethingModalInputs() {
 
-  var twitInputElems = document.getElementsByClassName('twit-input-element');
-  for (var i = 0; i < twitInputElems.length; i++) {
-    var input = twitInputElems[i].querySelector('input, textarea');
-    input.value = '';
-  }
+  var postTextInputElements = [
+    document.getElementById('post-text-input'),
+    document.getElementById('post-photo-input'),
+    document.getElementById('post-price-input'),
+    document.getElementById('post-city-input')
+  ];
+
+  /*
+   * Clear any text entered in the text inputs.
+   */
+  postTextInputElements.forEach(function (inputElem) {
+    inputElem.value = '';
+  });
+
+  /*
+   * Grab the originally checked radio button and make sure it's checked.
+   */
+  var checkedPostConditionButton = document.querySelector('#post-condition-fieldset input[checked]');
+  checkedPostConditionButton.checked = true;
 
 }
 
 
 /*
- * This function hides the modal to create a twit and clears any existing
- * values from the input fields whenever any of the modal close actions are
- * taken.
+ * This function hides the "sell something" modal by adding the "hidden"
+ * class from the modal and backdrop.  It also clears any existing inputs in
+ * the modal's input fields when the modal is hidden.
  */
-function hideCreateTwitModal() {
+function hideSellSomethingModal() {
 
+  var showSomethingModal = document.getElementById('sell-something-modal');
   var modalBackdrop = document.getElementById('modal-backdrop');
-  var createTwitModal = document.getElementById('create-twit-modal');
 
-  // Hide the modal and its backdrop.
+  showSomethingModal.classList.add('hidden');
   modalBackdrop.classList.add('hidden');
-  createTwitModal.classList.add('hidden');
 
-  clearTwitInputValues();
+  clearSellSomethingModalInputs();
 
 }
 
 
 /*
- * A function that determines whether a given twit matches a search query.
- * Returns true if the twit matches the query and false otherwise.
+ * This function creates a new <option> element containing a given city name.
  */
-function twitMatchesSearchQuery(twit, searchQuery) {
-  /*
-   * An empty query matches all twits.
-   */
-  if (!searchQuery) {
-    return true;
-  }
-
-  /*
-   * The search query matches the twit if either the twit's text or the twit's
-   * author contains the search query.
-   */
-  searchQuery = searchQuery.trim().toLowerCase();
-  return (twit.author + " " + twit.text).toLowerCase().indexOf(searchQuery) >= 0;
+function createCityOption(city) {
+  var newCityOption = document.createElement('option');
+  newCityOption.textContent = city;
+  return newCityOption;
 }
 
 
 /*
- * Perform a search over over all the twits based on the search query the user
- * entered in the navbar.  Only display twits that match the search query.
- * Display all twits if the search query is empty.
+ * A function to apply the current filters to a specific post.  Returns true
+ * if the post passes the filters and should be displayed and false otherwise.
  */
-function doSearchUpdate() {
+function postPassesFilters(post, filters) {
 
-  /*
-   * Grab the search query from the navbar search box.
-   */
-  var searchQuery = document.getElementById('navbar-search-input').value;
-
-  /*
-   * Remove all twits from the DOM temporarily.
-   */
-  var twitContainer = document.querySelector('.twit-container');
-  if (twitContainer) {
-    while (twitContainer.lastChild) {
-      twitContainer.removeChild(twitContainer.lastChild);
+  if (filters.text) {
+    var postDescription = post.description.toLowerCase();
+    var filterText = filters.text.toLowerCase();
+    if (postDescription.indexOf(filterText) === -1) {
+      return false;
     }
   }
 
+  if (filters.minPrice) {
+    var filterMinPrice = Number(filters.minPrice);
+    if (Number(post.price) < filterMinPrice) {
+      return false;
+    }
+  }
+
+  if (filters.maxPrice) {
+    var filterMaxPrice = Number(filters.maxPrice);
+    if (Number(post.price) > filterMaxPrice) {
+      return false;
+    }
+  }
+
+  if (filters.city) {
+    if (post.city.toLowerCase() !== filters.city.toLowerCase()) {
+      return false;
+    }
+  }
+
+  if (filters.conditions && filters.conditions.length > 0) {
+    if (filters.conditions.indexOf(post.condition) === -1) {
+      return false;
+    }
+  }
+
+  return true;
+
+}
+
+
+/*
+ * Applies the filters currently entered by the user to the set of all posts.
+ * Any post that satisfies the user's filter values will be displayed,
+ * including posts that are not currently being displayed because they didn't
+ * satisfy an old set of filters.  Posts that don't satisfy the filters are
+ * removed from the DOM.
+ */
+function doFilterUpdate() {
+
   /*
-   * Loop through the collection of all twits and add twits back into the DOM
-   * if they match the current search query.
+   * Grab values of filters from user inputs.
    */
-  allTwits.forEach(function (twit) {
-    if (twitMatchesSearchQuery(twit, searchQuery)) {
-      insertNewTwit(twit.text, twit.author);
+  var filters = {
+    text: document.getElementById('filter-text').value.trim(),
+    minPrice: document.getElementById('filter-min-price').value,
+    maxPrice: document.getElementById('filter-max-price').value,
+    city: document.getElementById('filter-city').value.trim(),
+    conditions: []
+  }
+
+  var filterConditionCheckedInputs = document.querySelectorAll("#filter-condition input:checked");
+  for (var i = 0; i < filterConditionCheckedInputs.length; i++) {
+    filters.conditions.push(filterConditionCheckedInputs[i].value);
+  }
+
+  /*
+   * Remove all "post" elements from the DOM.
+   */
+  var postContainer = document.getElementById('posts');
+  while(postContainer.lastChild) {
+    postContainer.removeChild(postContainer.lastChild);
+  }
+
+  /*
+   * Loop through the collection of all "post" elements and re-insert ones
+   * that meet the current filtering criteria.
+   */
+  allPosts.forEach(function (post) {
+    if (postPassesFilters(post, filters)) {
+      insertNewPost(post.description, post.photoURL, post.price, post.city, post.condition);
     }
   });
 
@@ -210,26 +304,31 @@ function doSearchUpdate() {
 
 
 /*
- * This function parses an existing DOM element representing a single twit
- * into an object representing that twit and returns that object.  The object
+ * This function parses an existing DOM element representing a single post
+ * into an object representing that post and returns that object.  The object
  * is structured like this:
  *
  * {
- *   text: "...",
- *   author: "..."
+ *   description: "...",
+ *   photoURL: "...",
+ *   price: ...,
+ *   city: "...",
+ *   condition: "..."
  * }
  */
-function parseTwitElem(twitElem) {
+function parsePostElem(postElem) {
 
-  var twit = {};
+  var post = {
+    price: postElem.getAttribute('data-price'),
+    city: postElem.getAttribute('data-city'),
+    condition: postElem.getAttribute('data-condition')
+  };
 
-  var twitTextElem = twitElem.querySelector('.twit-text');
-  twit.text = twitTextElem.textContent.trim();
+  var postImageElem = postElem.querySelector('.post-image-container img');
+  post.photoURL = postImageElem.src;
+  post.description = postImageElem.alt;
 
-  var twitAuthorLinkElem = twitElem.querySelector('.twit-author a');
-  twit.author = twitAuthorLinkElem.textContent.trim();
-
-  return twit;
+  return post;
 
 }
 
@@ -239,40 +338,43 @@ function parseTwitElem(twitElem) {
  */
 window.addEventListener('DOMContentLoaded', function () {
 
-  // Remember all of the existing twits in an array that we can use for search.
-  var twitElemsCollection = document.getElementsByClassName('twit');
-  for (var i = 0; i < twitElemsCollection.length; i++) {
-    allTwits.push(parseTwitElem(twitElemsCollection[i]));
+  /*
+   * Remember all of the initial post elements initially displayed in the page.
+   */
+  var postElems = document.getElementsByClassName('post');
+  for (var i = 0; i < postElems.length; i++) {
+    allPosts.push(parsePostElem(postElems[i]));
   }
 
-  var createTwitButton = document.getElementById('create-twit-button');
-  if (createTwitButton) {
-    createTwitButton.addEventListener('click', showCreateTwitModal);
+  /*
+   * Grab all of the city names already in the filter dropdown.
+   */
+  var filterCitySelect = document.getElementById('filter-city');
+  if (filterCitySelect) {
+    var filterCityOptions = filterCitySelect.querySelectorAll('option:not([selected])');
+    for (var i = 0; i < filterCityOptions.length; i++) {
+      allCities.push(filterCityOptions[i].value.trim().toLowerCase());
+    }
   }
 
-  var modalCloseButton = document.querySelector('#create-twit-modal .modal-close-button');
-  if (modalCloseButton) {
-    modalCloseButton.addEventListener('click', hideCreateTwitModal);
+  var sellSomethingButton = document.getElementById('sell-something-button');
+  if (sellSomethingButton) {
+    sellSomethingButton.addEventListener('click', showSellSomethingModal);
   }
 
-  var modalCancalButton = document.querySelector('#create-twit-modal .modal-cancel-button');
-  if (modalCancalButton) {
-    modalCancalButton.addEventListener('click', hideCreateTwitModal);
-  }
-
-  var modalAcceptButton = document.querySelector('#create-twit-modal .modal-accept-button');
+  var modalAcceptButton = document.getElementById('modal-accept');
   if (modalAcceptButton) {
     modalAcceptButton.addEventListener('click', handleModalAcceptClick);
   }
 
-  var searchButton = document.getElementById('navbar-search-button');
-  if (searchButton) {
-    searchButton.addEventListener('click', doSearchUpdate);
+  var modalHideButtons = document.getElementsByClassName('modal-hide-button');
+  for (var i = 0; i < modalHideButtons.length; i++) {
+    modalHideButtons[i].addEventListener('click', hideSellSomethingModal);
   }
 
-  var searchInput = document.getElementById('navbar-search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', doSearchUpdate);
+  var filterUpdateButton = document.getElementById('filter-update-button');
+  if (filterUpdateButton) {
+    filterUpdateButton.addEventListener('click', doFilterUpdate)
   }
 
 });
