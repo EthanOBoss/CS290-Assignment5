@@ -2,8 +2,8 @@
  * Write your client-side JS code in this file.  Make sure to add your name and
  * @oregonstate.edu email address below.
  *
- * Name:
- * Email:
+ * Name: Ethan Hickman
+ * Email: hickmaet@oregonstate.edu
  */
 
 
